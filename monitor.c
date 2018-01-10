@@ -98,6 +98,9 @@ void init_structure(transformador* tr){
     tr->tempo_40[i]=0;
     tr->media[i]=0;
     tr->soma[i]=0;
+    tr->max[i]=0;
+    tr->min[i]=0xFF;
+    tr->num_amostras=0;
   }
   switch (tr->potencia) {
     case 75:
@@ -116,4 +119,55 @@ void init_structure(transformador* tr){
     break;
   }
 
+}
+
+void update_status(transformador* tr){
+  uint8_t sample=0;
+  //SENSOR A
+  sample=get_adc(SENS_A);
+  if(sample>tr->max[SENS_A]){
+    tr->max[SENS_A]=sample;
+  }
+  if(sample<tr->min[SENS_A]){
+    tr->min[SENS_A]=sample;
+  }
+  tr->soma[SENS_A]+=sample;
+
+
+  //SENSOR B
+  sample=get_adc(SENS_B);
+  if(sample>tr->max[SENS_B]){
+    tr->max[SENS_B]=sample;
+  }
+  if(sample<tr->min[SENS_B]){
+    tr->min[SENS_B]=sample;
+  }
+  tr->soma[SENS_B]+=sample;
+
+  //SENSOR C
+  sample=get_adc(SENS_C);
+  if(sample>tr->max[SENS_C]){
+    tr->max[SENS_C]=sample;
+  }
+  if(sample<tr->min[SENS_C]){
+    tr->min[SENS_C]=sample;
+  }
+  tr->soma[SENS_C]+=sample;
+
+
+  tr->num_amostras++;
+}
+
+uint16_t get_current(uint8_t difference){
+  return difference*gain;
+}
+
+void reset_values(transformador* tr){
+  for(int i=0;i<3;i++){
+    tr->media[i]=0;
+    tr->soma[i]=0;
+    tr->min[i]=0xFF;
+    tr->max[i]=0;
+  }
+  tr->num_amostras=0;
 }

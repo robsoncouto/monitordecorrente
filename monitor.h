@@ -20,17 +20,40 @@
 void init_hardware(void);
 void lamp_on(uint8_t lamp);
 void lamp_off(uint8_t lamp);
+uint16_t get_adc(uint8_t channel);
 uint8_t get_transformer_size(void);
+
+void clear_one_sec_flag(void);
+uint8_t one_sec_passed(void);
+
 
 typedef struct tranf_t {
   uint8_t potencia;
-  uint8_t criterio_20;
-  uint8_t criterio_40;
+  uint32_t criterio_20;
+  uint32_t criterio_40;
   uint32_t tempo_20[3];
   uint32_t tempo_40[3];
   uint16_t   media[3];
-  uint32_t  soma[3];
+  uint16_t   max[3];
+  uint16_t   min[3];
+  unsigned long  soma[3];
+  uint16_t   num_amostras;
 } transformador;
 
+void init_structure(transformador* tr);
+void reset_values(transformador* tr);
+void update_status(transformador* tr);
+
+#define sqrt3 1.73205080757
+
+#define CRTI_20_75   113.636*1.2//(75000/(220*3)*1,2
+#define CRTI_20_150  227.272*1.2//(150000/(220*3)*1,2
+#define CRTI_20_225  340.909*1.2//(225000/(220*3)*1,2
+
+#define CRTI_40_75   113.636*1.4//(75000/(220*3)*1,4
+#define CRTI_40_150  227.272*1.4//(150000/(220*3)*1,4
+#define CRTI_40_225  340.909*1.4//(225000/(220*3)*1,4
+
+#define gain 1.5
 
 #endif
