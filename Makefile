@@ -8,7 +8,7 @@
 MCU = atmega328p
 FORMAT = ihex
 TARGET = main
-SRC = $(TARGET).c serial/uart.c
+SRC = $(TARGET).c serial/uart.c monitor.c
 ASRC =
 OPT = s
 
