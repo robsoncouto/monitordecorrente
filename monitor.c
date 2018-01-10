@@ -22,11 +22,19 @@ void init_tim1(void){  //timer 1
 
 }
 
+volatile uint8_t ready;
 //interrupção
 ISR(TIMER1_OVF_vect){
   TCNT1H=0x0B;
   TCNT1L=0xDC;
   //PORTB^=(1<<PB4);
+  ready=1;
+}
+uint8_t one_sec_passed(void){
+  return ready;
+}
+void clear_one_sec_flag(void){
+  ready=0;
 }
 
 void lamp_on(uint8_t lamp){
@@ -55,6 +63,7 @@ void init_hardware(void){
   PORTB=(1<<SELECT_150)|(1<<SELECT_225);
 
   lamp_on(LAMP_ON);
+  ready=0;
 }
 
 uint8_t get_transformer_size(void){
@@ -72,9 +81,39 @@ uint8_t get_transformer_size(void){
 }
 
 void init_structure(transformador* tr){
+  /*
+  typedef struct tranf_t {
+    uint8_t potencia;
+    uint8_t criterio_20;
+    uint8_t criterio_40;
+    uint32_t tempo_20[3];
+    uint32_t tempo_40[3];
+    uint16_t   media[3];
+    uint32_t  soma[3];
+  } transformador;
+  */
+  tr->potencia=get_transformer_size();
   for(int i=0;i<3;i++){
     tr->tempo_20[i]=0;
     tr->tempo_40[i]=0;
+    tr->media[i]=0;
+    tr->soma[i]=0;
+  }
+  switch (tr->potencia) {
+    case 75:
+      tr->criterio_20=CRTI_20_75;
+      tr->criterio_40=CRTI_40_75;
+      break;
+    case 150:
+      tr->criterio_20=CRTI_20_150;
+      tr->criterio_40=CRTI_40_150;
+      break;
+    case 225:
+      tr->criterio_20=CRTI_20_225;
+      tr->criterio_40=CRTI_40_225;
+      break;
+    default:
+    break;
   }
 
 }
