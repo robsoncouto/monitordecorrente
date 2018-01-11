@@ -4,19 +4,22 @@
 #include<avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
-#include "monitor.h"
 #include "serial/uart.h"
 #include <stdio.h>
-
+#include "monitor.h"
 /*
-criterio1 e 2
-tempo
+TODO
+calculo desbalanceamento
+criterios
+
 */
+
+
 transformador tr;
 
 int main(void) {
-  static FILE mystdout = FDEV_SETUP_STREAM(uart0_putc, NULL,_FDEV_SETUP_WRITE);
-	stdout = &mystdout;
+  stdout = &mystdout;
+
   DDRB=1<<PINB5;
   //DDRD=(1<<PINB0)|(1<<PINB1);
   sei();
@@ -24,33 +27,41 @@ int main(void) {
   init_hardware();
   lamp_on(LAMP_DES);
   init_structure(&tr);
-
   while(1) {
     //printf("size of the transformador: %d\n",tr.potencia);
     //printf("criterio de 20: %d\n",tr.criterio_20);
     //printf("criterio de 40: %d\n",tr.criterio_40);
-    //printf("sensor A: %d\n", get_adc(SENS_A));
-    //printf("sensor B: %d\n", get_adc(SENS_B));
-    //printf("sensor C: %d\n", get_adc(SENS_C));
 
+    //get measurement and evaluates max and min values
     update_status(&tr);
 
-
     if(one_sec_passed()){
-      printf("Hi there\n");
+      //printf("Em 1 segundo:\n");
       clear_one_sec_flag();
-      tr.media[SENS_A]= tr.soma[SENS_A]/tr.num_amostras;
-      printf("media : %u\n", tr.media[SENS_A]);
-      printf("soma : %lu\n", tr.soma[SENS_A]);
-      printf("max : %u\n", tr.max[SENS_A]);
-      printf("min : %u\n", tr.min[SENS_A]);
-      printf("amostras : %u\n", tr.num_amostras);
-      printf("diff : %u\n", tr.max[SENS_A]-tr.media[SENS_A]);
+      //printf("media : %.2f\n", teste);
+      //printf("soma : %lu\n", tr.soma[SENS_A]);
+      //printf("max : %.2f\n", (0.01953125)* (float) tr.max[SENS_A]);
+      //printf("min : %.2f\n", (0.01953125)* (float) tr.min[SENS_A]);
+      //printf("amostras : %u\n", tr.num_amostras);
+      //printf("diferenca : %u\n", tr.delta[SENS_A]);
+      analyse_samples(&tr);
+      evaluate_criteria(&tr);
+      update_clock(&tr);
+      //printf("corrente : %.2f\n", get_current(tr.delta[SENS_A]));
+      //printf("criterio 20 : %d\n",tr.criterio_20);
+      //printf("criterio 40 : %d\n",tr.criterio_40);
+
+      //printf("cronometro 20 : %d\n",tr.tempo_20[SENS_A]);
+      //printf("cronometro 40 : %d\n",tr.tempo_40[SENS_A]);
+      debug(&tr);
+      printf("\n\n\n");
       reset_values(&tr);
 
-      printf("sensor A: %d\n", get_adc(SENS_A));
-      printf("sensor B: %d\n", get_adc(SENS_B));
-      printf("sensor C: %d\n", get_adc(SENS_C));
+
+
+      //printf("sensor A: %d\n", get_adc(SENS_A));
+      //printf("sensor B: %d\n", get_adc(SENS_B));
+      //printf("sensor C: %d\n", get_adc(SENS_C));
 
 
     }
