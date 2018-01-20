@@ -10,7 +10,7 @@ uint16_t get_adc(uint8_t channel){
   ADMUX|=channel;
   ADCSRA |= (1<<ADSC);
   while(ADCSRA & (1<<ADSC));
-  return (ADC);
+  return (ADCW);
 }
 
 
@@ -168,7 +168,7 @@ void init_structure(transformador* tr){
 }
 
 void update_status(transformador* tr){
-  uint8_t sample=0;
+  uint16_t sample=0;
   //SENSOR A
   sample=get_adc(SENS_A);
   if(sample>tr->max[SENS_A]){
@@ -216,8 +216,8 @@ void analyse_samples(transformador* tr){
 
 }
 
-uint16_t get_current(uint8_t difference){
-  return difference*gain*(0.01953125);
+float get_current(uint16_t difference){
+  return (float) difference*gain*(0.00488281);
 }
 
 void reset_values(transformador* tr){
@@ -291,12 +291,12 @@ void update_clock(transformador* tr){
 void debug(transformador* tr){
   printf("Em 1 segundo:\n");
   printf("soma : A:%lu B:%lu C:%lu\n", tr->soma[SENS_A], tr->soma[SENS_B], tr->soma[SENS_C]);
-  printf("max   : A:%5.2f B:%5.2f C:%5.2f\n", (0.01953125)* (float) tr->max[SENS_A], (0.01953125)* (float) tr->max[SENS_B], (0.01953125)* (float) tr->max[SENS_C]);
-  printf("min   : A:%5.2f B:%5.2f C:%5.2f\n", (0.01953125)* (float) tr->min[SENS_A], (0.01953125)* (float) tr->min[SENS_B], (0.01953125)* (float) tr->min[SENS_C]);
-  printf("media : A:%5.2f B:%5.2f C:%5.2f\n", (0.01953125)* (float) tr->media[SENS_A], (0.01953125)* (float) tr->media[SENS_B], (0.01953125)* (float) tr->media[SENS_C]);
+  printf("max   : A:%5.2f B:%5.2f C:%5.2f\n", (0.00488281)* (float) tr->max[SENS_A], (0.00488281)* (float) tr->max[SENS_B], (0.00488281)* (float) tr->max[SENS_C]);
+  printf("min   : A:%5.2f B:%5.2f C:%5.2f\n", (0.00488281)* (float) tr->min[SENS_A], (0.00488281)* (float) tr->min[SENS_B], (0.00488281)* (float) tr->min[SENS_C]);
+  printf("media : A:%5.2f B:%5.2f C:%5.2f\n", (0.00488281)* (float) tr->media[SENS_A], (0.00488281)* (float) tr->media[SENS_B], (0.00488281)* (float) tr->media[SENS_C]);
   printf("amostras : %u\n", tr->num_amostras);
-  printf("delta : A:%5.2f B:%5.2f C:%5.2f\n", (0.01953125)* (float) tr->delta[SENS_A], (0.01953125)* (float) tr->delta[SENS_B], (0.01953125)* (float) tr->delta[SENS_C]);
-  printf("corrente : A:%u B:%u C:%u\n", get_current(tr->delta[SENS_A]), get_current(tr->delta[SENS_B]), get_current(tr->delta[SENS_C]));
+  printf("delta : A:%5.2f B:%5.2f C:%5.2f\n", (0.00488281)* (float) tr->delta[SENS_A], (0.00488281)* (float) tr->delta[SENS_B], (0.00488281)* (float) tr->delta[SENS_C]);
+  printf("corrente : A:%f B:%f C:%f\n", get_current(tr->delta[SENS_A]), get_current(tr->delta[SENS_B]), get_current(tr->delta[SENS_C]));
   printf("criterio 20 : %.2f\n",tr->criterio_20);
   printf("criterio 40 : %.2f\n",tr->criterio_40);
 

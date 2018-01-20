@@ -30,7 +30,7 @@ uint8_t get_transformer_size(void);
 
 void clear_one_sec_flag(void);
 uint8_t one_sec_passed(void);
-uint16_t get_current(uint8_t difference);
+float get_current(uint16_t difference);
 
 typedef struct tranf_t {
   uint8_t potencia;
@@ -64,7 +64,7 @@ void analyse_samples(transformador* tr);
 #define CRTI_40_150  227.272*1.4//(150000/(220*3)*1,4
 #define CRTI_40_225  340.909*1.4//(225000/(220*3)*1,4
 
-#define gain 303
+#define gain 259.7402
 
 void debug(transformador* tr);
 
