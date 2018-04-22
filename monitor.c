@@ -22,7 +22,8 @@ uint16_t get_adc(uint8_t channel){
 float get_voltage(uint8_t channel){
   float sample;
   sample=get_adc(channel);
-  sample*=0.0048828125;//5V/1024
+  //sample*=0.0048828125;//5V/1024
+  sample*=V_REFERENCE/1024;//5V/1024
   return sample;
 }
 

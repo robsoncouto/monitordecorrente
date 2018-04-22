@@ -1,6 +1,8 @@
 #ifndef MONITOR_H
 #define MONITOR_H
 
+#define V_REFERENCE 3.3
+
 //connected to 74hc595
 #define LAMP_ON  1
 #define LAMP_A   2
