@@ -144,7 +144,7 @@ sym: $(TARGET).sym
 program: $(TARGET).hex $(TARGET).eep
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
 arduino: $(TARGET).hex $(TARGET).eep
-	$(AVRDUDE) -v -p atmega328p -c arduino -P /dev/ttyUSB0 -b 57600 -D $(AVRDUDE_WRITE_FLASH):i
+	$(AVRDUDE) -v -p atmega328p -c arduino -P /dev/ttyUSB0 -b 115200 -D $(AVRDUDE_WRITE_FLASH):i
 # avrdude -v -p atmega328p -c arduino -P /dev/ttyUSB0 -b 57600 -D -U flash:w:blink.hex:i
 # thanks to https://typeunsafe.wordpress.com/2011/07/22/programming-arduino-with-avrdude/
 
