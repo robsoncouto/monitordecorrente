@@ -1,17 +1,20 @@
 #ifndef MONITOR_H
 #define MONITOR_H
 
-//PORT D
-#define LAMP_ON  2
-#define LAMP_A   3
-#define LAMP_B   4
-#define LAMP_C   5
-#define LAMP_DES 6
+//connected to 74hc595
+#define LAMP_ON  1
+#define LAMP_A   2
+#define LAMP_B   3
+#define LAMP_C   4
+#define LAMP_DES 5
 
+#define HC595_DATA 3// PORTD
+#define HC595_LATCH 4// PORTD
+#define HC595_CLOCK 5// PORTD
 
-#define SELECT_75  7//PORTD
-#define SELECT_150 0//PORTB
-#define SELECT_225 1//PORTB
+#define SELECT_75  6//PORTD
+#define SELECT_150 7//PORTD
+#define SELECT_225 0//PORTB
 
 #define SENS_A 0
 #define SENS_B 1
@@ -53,6 +56,7 @@ void update_status(transformador* tr);
 void update_clock(transformador* tr);
 void evaluate_criteria(transformador* tr);
 void analyse_samples(transformador* tr);
+float get_voltage(uint8_t channel);
 
 #define sqrt3 1.73205080757
 
@@ -64,7 +68,7 @@ void analyse_samples(transformador* tr);
 #define CRTI_40_150  227.272*1.4//(150000/(220*3)*1,4
 #define CRTI_40_225  340.909*1.4//(225000/(220*3)*1,4
 
-#define gain 259.7402
+#define gain 666.666    
 
 void debug(transformador* tr);
 

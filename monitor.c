@@ -5,12 +5,25 @@
 #include <stdio.h>
 #include "monitor.h"
 
+#define F_CPU 16000000UL
+
+#include <util/delay.h>
+
+uint8_t lamp_state;
+
 uint16_t get_adc(uint8_t channel){
   ADMUX&=0xF0;
   ADMUX|=channel;
   ADCSRA |= (1<<ADSC);
   while(ADCSRA & (1<<ADSC));
   return (ADCW);
+}
+
+float get_voltage(uint8_t channel){
+  float sample;
+  sample=get_adc(channel);
+  sample*=0.0048828125;//5V/1024
+  return sample;
 }
 
 
@@ -84,19 +97,41 @@ void clear_one_sec_flag(void){
 }
 
 void lamp_on(uint8_t lamp){
-  PORTD|=(1<<lamp);
+  lamp_state|=0x1e&(1<<lamp);
+  shift_out(lamp_state);
 }
 
 void lamp_off(uint8_t lamp){
-  PORTD&=~(1<<lamp);
+  lamp_state&=~(0x1e&(1<<lamp));
+  shift_out(lamp_state);
 }
+void shift_out(uint8_t data){
+  PORTD&=~(1<<HC595_LATCH);
+  PORTD&=~(1<<HC595_CLOCK);
+  for(int i=0;i<8;i++){
+    PORTD&=~(1<<HC595_CLOCK);
+    _delay_ms(1);
+    if(data&(1<<i)){
+      PORTD|=(1<<HC595_DATA);
+    }else{
+      PORTD&=~(1<<HC595_DATA);
+    }
+    _delay_ms(1);
+    PORTD|=(1<<HC595_CLOCK);
+    _delay_ms(1);
+  }
+  PORTD|=(1<<HC595_DATA);
+  PORTD|=(1<<HC595_LATCH);
+  PORTD|=(1<<HC595_CLOCK);
+}
+
 
 void init_hardware(void){
   //ports
-  DDRD=(1<<LAMP_A)|(1<<LAMP_B)|(1<<LAMP_C)|(1<<LAMP_ON)|(1<<LAMP_DES)|(0<<SELECT_75);
-  DDRB=(0<<SELECT_150)|(0<<SELECT_225)|(1<<4);
+  DDRD=(1<<HC595_DATA)|(1<<HC595_LATCH)|(1<<HC595_CLOCK)|(0<<SELECT_75)|(0<<SELECT_150);
+  DDRB=(0<<SELECT_225);
   //serial coms
-  uart_init(UART_BAUD_SELECT(9600,16000000UL));
+  uart_init(UART_BAUD_SELECT(115200,16000000UL));
   //timers
   init_tim1();
   //adc
@@ -105,11 +140,12 @@ void init_hardware(void){
   sei();
 
   //pull ups
-  PORTD=(1<<SELECT_75);
-  PORTB=(1<<SELECT_150)|(1<<SELECT_225);
+  //PORTD=(1<<SELECT_75);
+  //PORTB=(1<<SELECT_150)|(1<<SELECT_225);
 
-  lamp_on(LAMP_ON);
+  //lamp_on(LAMP_ON);
   ready=0;
+  shift_out(0);
 }
 
 uint8_t get_transformer_size(void){
@@ -255,18 +291,11 @@ void evaluate_criteria(transformador* tr){
     }
 }
 void turn_on_lamps(uint8_t i){
-    printf("lamp - :%d", i);
-    switch (i) {
-      case SENS_A:
-        lamp_on(LAMP_A);
-        break;
-      case SENS_B:
-        lamp_on(LAMP_B);
-      break;
-      case SENS_C:
-        lamp_on(LAMP_C);
-      break;
-    }
+    //static uint8_t lamps=0; 
+    //printf("lamp - :%d", i);
+    //lamps|=(1<<i);
+    shift_out(i);
+    
 }
 void update_clock(transformador* tr){
   for(int i=0;i<3;i++){
