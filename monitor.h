@@ -30,6 +30,7 @@ static FILE mystdout = FDEV_SETUP_STREAM(uart0_putc, NULL,_FDEV_SETUP_WRITE);
 void init_hardware(void);
 void lamp_on(uint8_t lamp);
 void lamp_off(uint8_t lamp);
+void turn_lamps_on(uint8_t i);
 uint16_t get_adc(uint8_t channel);
 uint8_t get_transformer_size(void);
 
@@ -72,6 +73,6 @@ float get_voltage(uint8_t channel);
 
 #define gain 666.666    
 
-void debug(transformador* tr);
+void debug_messages(transformador* tr);
 
 #endif

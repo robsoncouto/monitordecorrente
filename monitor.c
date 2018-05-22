@@ -97,15 +97,6 @@ void clear_one_sec_flag(void){
   ready=0;
 }
 
-void lamp_on(uint8_t lamp){
-  lamp_state|=0x1e&(1<<lamp);
-  shift_out(lamp_state);
-}
-
-void lamp_off(uint8_t lamp){
-  lamp_state&=~(0x1e&(1<<lamp));
-  shift_out(lamp_state);
-}
 void shift_out(uint8_t data){
   PORTD&=~(1<<HC595_LATCH);
   PORTD&=~(1<<HC595_CLOCK);
@@ -126,6 +117,15 @@ void shift_out(uint8_t data){
   PORTD|=(1<<HC595_CLOCK);
 }
 
+void lamp_on(uint8_t lamp){
+  lamp_state|=0x1e&(1<<lamp);
+  shift_out(lamp_state);
+}
+
+void lamp_off(uint8_t lamp){
+  lamp_state&=~(0x1e&(1<<lamp));
+  shift_out(lamp_state);
+}
 
 void init_hardware(void){
   //ports
@@ -291,7 +291,7 @@ void evaluate_criteria(transformador* tr){
       }
     }
 }
-void turn_on_lamps(uint8_t i){
+void turn_lamps_on(uint8_t i){
     //static uint8_t lamps=0; 
     //printf("lamp - :%d", i);
     //lamps|=(1<<i);
@@ -304,21 +304,22 @@ void update_clock(transformador* tr){
       if(tr->tempo_20[i]>0){
         tr->tempo_20[i]--;
         if(tr->tempo_20[i]==0){
-          turn_on_lamps(i);
+          turn_lamps_on(i);
         }
       }
     } else if(tr->overload[i]==40){
       if(tr->tempo_40[i]>0){
         tr->tempo_40[i]--;
         if(tr->tempo_40[i]==0){
-          turn_on_lamps(i);
+          turn_lamps_on(i);
         }
       }
     }
   }
 }
 
-void debug(transformador* tr){
+void debug_messages(transformador* tr){
+#ifdef TEXT_DEBUG
   printf("Em 1 segundo:\n");
   printf("soma : A:%lu B:%lu C:%lu\n", tr->soma[SENS_A], tr->soma[SENS_B], tr->soma[SENS_C]);
   printf("max   : A:%5.2f B:%5.2f C:%5.2f\n", (0.00488281)* (float) tr->max[SENS_A], (0.00488281)* (float) tr->max[SENS_B], (0.00488281)* (float) tr->max[SENS_C]);
@@ -329,10 +330,32 @@ void debug(transformador* tr){
   printf("corrente : A:%f B:%f C:%f\n", get_current(tr->delta[SENS_A]), get_current(tr->delta[SENS_B]), get_current(tr->delta[SENS_C]));
   printf("criterio 20 : %.2f\n",tr->criterio_20);
   printf("criterio 40 : %.2f\n",tr->criterio_40);
-
+  
   printf("sobrecarga : A:%d B:%d C:%d\n",tr->overload[SENS_A], tr->overload[SENS_B], tr->overload[SENS_C]);
-
+  
   printf("cronometro 20 : A:%d B:%d C:%d\n",tr->tempo_20[SENS_A], tr->tempo_20[SENS_B], tr->tempo_20[SENS_C]);
   printf("cronometro 40 : A:%d B:%d C:%d\n",tr->tempo_40[SENS_A], tr->tempo_40[SENS_B], tr->tempo_40[SENS_C]);
+#endif
 
+#ifdef GRAPHICAL_DEBUG
+  //debug packet
+  uart_putc(0x55);
+  uart_putc(0x55);
+  uart_putc('A');
+  printf("%6.2f",get_voltage(0));
+  uart_putc('\n');
+  
+  uart_putc(0x55);
+  uart_putc(0x55);
+  uart_putc('B');
+  printf("%6.2f",get_voltage(1));
+  uart_putc('\n');
+  
+  uart_putc(0x55);
+  uart_putc(0x55);
+  uart_putc('C');
+  printf("%6.2f",get_voltage(2));
+  uart_putc('\n');
+  
+#endif
 }

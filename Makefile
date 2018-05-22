@@ -28,7 +28,7 @@ DEBUG = stabs
 CSTANDARD = -std=gnu99
 
 # Place -D or -U options here
-CDEFS =
+CDEFS = -DGRAPHICAL_DEBUG=1
 
 # Place -I options here
 CINCS =
