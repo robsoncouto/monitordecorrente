@@ -31,8 +31,6 @@ fig, [ax1, ax2,ax3] = plt.subplots(3, 1,sharex='col')
 ax1.set_ylim(MINBOUND,MAXBOUND)
 ax2.set_ylim(MINBOUND,MAXBOUND)
 ax3.set_ylim(MINBOUND,MAXBOUND)
-#plt.ylim([MINBOUND,MAXBOUND])
-
 
 y1data = [MINBOUND]*50# 50 samples, fixed
 y2data = [MINBOUND]*50
