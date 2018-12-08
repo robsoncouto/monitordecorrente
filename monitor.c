@@ -10,6 +10,7 @@
 #include <util/delay.h>
 
 uint8_t lamp_state;
+transformador* trp;
 
 uint16_t get_adc(uint8_t channel){
   ADMUX&=0xF0;
@@ -82,6 +83,13 @@ void init_tim1(void){  //timer 1
 
 }
 
+void init_tim0(void){  //timer 1
+  TCCR0A=0x00;//Normal mode
+  TCCR0B=(1<<CS01); //8 prescaller -> 2MHz
+  TCNT0=56; // 256-56=200 (2Mhz/200=10KHz)
+  TIMSK0=(1<<TOIE0);
+}
+
 volatile uint8_t ready;
 //interrupção
 ISR(TIMER1_OVF_vect){
@@ -90,6 +98,22 @@ ISR(TIMER1_OVF_vect){
   //PORTB^=(1<<PB4);
   ready=1;
 }
+
+
+char samp_flag=1;
+
+uint8_t sample_time(void){
+  return samp_flag;
+}
+
+ISR(TIMER0_OVF_vect){
+  TCNT0=56;
+  //update_status(trp);
+  samp_flag=1;
+  PORTB^=(1<<PB4);
+}
+
+
 uint8_t one_sec_passed(void){
   return ready;
 }
@@ -131,8 +155,10 @@ void init_hardware(void){
   //ports
   DDRD=(1<<HC595_DATA)|(1<<HC595_LATCH)|(1<<HC595_CLOCK)|(0<<SELECT_75)|(0<<SELECT_150);
   DDRB=(0<<SELECT_225);
+  DDRB|=(1<<PB4);
+  
   //serial coms
-  uart_init(UART_BAUD_SELECT(115200,16000000UL));
+  uart_init(UART_BAUD_SELECT(9600,16000000UL));
   //timers
   init_tim1();
   //adc
@@ -147,6 +173,8 @@ void init_hardware(void){
   //lamp_on(LAMP_ON);
   ready=0;
   shift_out(0);
+  
+  init_tim0();
 }
 
 uint8_t get_transformer_size(void){
@@ -171,15 +199,16 @@ void init_structure(transformador* tr){
     uint8_t criterio_40;
     uint32_t tempo_20[3];
     uint32_t tempo_40[3];
-    uint16_t   media[3];
+    uint16_t   rms[3];
     uint32_t  soma[3];
   } transformador;
   */
   tr->potencia=get_transformer_size();
+  trp=tr;
   for(int i=0;i<3;i++){
     tr->tempo_20[i]=0;
     tr->tempo_40[i]=0;
-    tr->media[i]=0;
+    tr->rms[i]=0;
     tr->soma[i]=0;
     tr->max[i]=0;
     tr->min[i]=0xFF;
@@ -208,6 +237,7 @@ void update_status(transformador* tr){
   uint16_t sample=0;
   //SENSOR A
   sample=get_adc(SENS_A);
+  sample*=sample;//sample²
   if(sample>tr->max[SENS_A]){
     tr->max[SENS_A]=sample;
   }
@@ -219,6 +249,7 @@ void update_status(transformador* tr){
 
   //SENSOR B
   sample=get_adc(SENS_B);
+  sample*=sample;//sample²
   if(sample>tr->max[SENS_B]){
     tr->max[SENS_B]=sample;
   }
@@ -229,6 +260,7 @@ void update_status(transformador* tr){
 
   //SENSOR C
   sample=get_adc(SENS_C);
+  sample*=sample;//sample²
   if(sample>tr->max[SENS_C]){
     tr->max[SENS_C]=sample;
   }
@@ -239,17 +271,18 @@ void update_status(transformador* tr){
 
 
   tr->num_amostras++;
+  samp_flag=0;
 }
 
 void analyse_samples(transformador* tr){
-  tr->media[SENS_A]= tr->soma[SENS_A]/tr->num_amostras;
-  tr->delta[SENS_A]=tr->max[SENS_A]-tr->media[SENS_A];
+  tr->rms[SENS_A]= sqrt(tr->soma[SENS_A]/tr->num_amostras);
+  tr->delta[SENS_A]=tr->max[SENS_A]-tr->rms[SENS_A];
 
-  tr->media[SENS_B]= tr->soma[SENS_B]/tr->num_amostras;
-  tr->delta[SENS_B]=tr->max[SENS_B]-tr->media[SENS_B];
+  tr->rms[SENS_B]= sqrt(tr->soma[SENS_B]/tr->num_amostras);
+  tr->delta[SENS_B]=tr->max[SENS_B]-tr->rms[SENS_B];
 
-  tr->media[SENS_C]= tr->soma[SENS_C]/tr->num_amostras;
-  tr->delta[SENS_C]=tr->max[SENS_C]-tr->media[SENS_C];
+  tr->rms[SENS_C]= sqrt(tr->soma[SENS_C]/tr->num_amostras);
+  tr->delta[SENS_C]=tr->max[SENS_C]-tr->rms[SENS_C];
 
 }
 
@@ -259,7 +292,7 @@ float get_current(uint16_t difference){
 
 void reset_values(transformador* tr){
   for(int i=0;i<3;i++){
-    tr->media[i]=0;
+    tr->rms[i]=0;
     tr->soma[i]=0;
     tr->min[i]=0xFF;
     tr->max[i]=0;
@@ -324,7 +357,7 @@ void debug_messages(transformador* tr){
   printf("soma : A:%lu B:%lu C:%lu\n", tr->soma[SENS_A], tr->soma[SENS_B], tr->soma[SENS_C]);
   printf("max   : A:%5.2f B:%5.2f C:%5.2f\n", (0.00488281)* (float) tr->max[SENS_A], (0.00488281)* (float) tr->max[SENS_B], (0.00488281)* (float) tr->max[SENS_C]);
   printf("min   : A:%5.2f B:%5.2f C:%5.2f\n", (0.00488281)* (float) tr->min[SENS_A], (0.00488281)* (float) tr->min[SENS_B], (0.00488281)* (float) tr->min[SENS_C]);
-  printf("media : A:%5.2f B:%5.2f C:%5.2f\n", (0.00488281)* (float) tr->media[SENS_A], (0.00488281)* (float) tr->media[SENS_B], (0.00488281)* (float) tr->media[SENS_C]);
+  printf("rms : A:%5.2f B:%5.2f C:%5.2f\n", (0.00488281)* (float) tr->rms[SENS_A], (0.00488281)* (float) tr->rms[SENS_B], (0.00488281)* (float) tr->rms[SENS_C]);
   printf("amostras : %u\n", tr->num_amostras);
   printf("delta : A:%5.2f B:%5.2f C:%5.2f\n", (0.00488281)* (float) tr->delta[SENS_A], (0.00488281)* (float) tr->delta[SENS_B], (0.00488281)* (float) tr->delta[SENS_C]);
   printf("corrente : A:%f B:%f C:%f\n", get_current(tr->delta[SENS_A]), get_current(tr->delta[SENS_B]), get_current(tr->delta[SENS_C]));
@@ -342,19 +375,19 @@ void debug_messages(transformador* tr){
   uart_putc(0x55);
   uart_putc(0x55);
   uart_putc('A');
-  printf("%6.2f",get_voltage(0));
+  printf("%6.2f",get_current(tr->delta[SENS_A]));
   uart_putc('\n');
   
   uart_putc(0x55);
   uart_putc(0x55);
   uart_putc('B');
-  printf("%6.2f",get_voltage(1));
+  printf("%6.2f",get_current(tr->delta[SENS_B]));
   uart_putc('\n');
   
   uart_putc(0x55);
   uart_putc(0x55);
   uart_putc('C');
-  printf("%6.2f",get_voltage(2));
+  printf("%6.2f",get_current(tr->delta[SENS_C]));
   uart_putc('\n');
   
 #endif

@@ -1,7 +1,7 @@
 #ifndef MONITOR_H
 #define MONITOR_H
 
-#define V_REFERENCE 3.3
+#define V_REFERENCE 5
 
 //connected to 74hc595
 #define LAMP_ON  1
@@ -36,6 +36,7 @@ uint8_t get_transformer_size(void);
 
 void clear_one_sec_flag(void);
 uint8_t one_sec_passed(void);
+uint8_t sample_time(void);
 float get_current(uint16_t difference);
 
 typedef struct tranf_t {
@@ -44,11 +45,11 @@ typedef struct tranf_t {
   float criterio_40;
   uint32_t tempo_20[3];
   uint32_t tempo_40[3];
-  uint16_t   media[3];
+  uint32_t   rms[3];
   uint16_t   max[3];
   uint16_t   min[3];
-  uint16_t   delta[3];
-  uint16_t   overload[3];
+  uint32_t   delta[3];
+  uint32_t   overload[3];
   unsigned long  soma[3];
   uint16_t   num_amostras;
 } transformador;
